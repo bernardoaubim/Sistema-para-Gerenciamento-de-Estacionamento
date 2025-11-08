@@ -21,7 +21,7 @@ public class trabalho {
     public static String[][] estacionamento;
 
     // teste
-    public static String vaga = " b 3 ";
+    public static String vaga = "";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -82,10 +82,10 @@ public class trabalho {
             }
         }
 
-        estacionamento[0][1] = "A2=C:08:15";
-        estacionamento[1][2] = "B3=V:12:34";
-        estacionamento[2][4] = "C5=M:15:03";
-        estacionamento[3][1] = "D2=C:21:00";
+        estacionamento[0][1] = "C:08:15";
+        estacionamento[1][2] = "V:12:34";
+        estacionamento[2][4] = "M:15:03";
+        estacionamento[3][1] = "C:21:00";
 
         // 4. Impressão da matriz com formatação.
         // for (int i = 0; i < corredores; i++) {
@@ -106,15 +106,15 @@ public class trabalho {
         vaga = (vaga.toUpperCase()).replace(" ", "");
 
         int letraVaga = vaga.charAt(0);
-        linha = letraVaga - 'A';
+        int linhaLocal = letraVaga - 'A';
 
         try {
             String numeroVaga = vaga.substring(1);
-            coluna = Integer.parseInt(numeroVaga) - 1;
+            int colunaLocal = Integer.parseInt(numeroVaga) - 1;
 
             // verifica se esta dentro dos limites
-            if (linha >= 0 && linha < corredores && coluna >= 0 && coluna < colunas) {
-                return new int[] { linha, coluna };
+            if (linhaLocal >= 0 && linhaLocal < corredores && colunaLocal >= 0 && colunaLocal < colunas) {
+                return new int[] { linhaLocal, colunaLocal };
             } else {
                 return null;
             }
@@ -124,12 +124,10 @@ public class trabalho {
 
     }
 
-    public static void ConverterIndicesParaVaga() {
+    public static String ConverterIndicesParaVaga(int linha, int coluna) {
         char letra = (char) (linha + 'A');
         int numero = coluna + 1;
-        vaga = String.format("%c%d", letra, numero);
-        System.out.println(vaga);
-
+        return String.format("%c%d", letra, numero);
     }
 
     public static void AbrirMenu(Scanner scanner) {
@@ -193,9 +191,9 @@ public class trabalho {
     }
 
     public static void consultarVaga(Scanner scanner, String vaga) {
-        String opcao = ""; 
+        String opcao = "";
         while (true) {
-            if (opcao.equals(0)) {
+            if (opcao.equals("0")) {
                 System.out.print("\033\143");
                 break;
             }
@@ -211,33 +209,140 @@ public class trabalho {
 
             int linhaParaOcupar = indices[0];
             int colunaParaOcupar = indices[1];
-            if (estacionamento[linhaParaOcupar][colunaParaOcupar] != ".") {
+            if (!estacionamento[linhaParaOcupar][colunaParaOcupar].equals(".")) {
                 // talvez transforme isso em uma função para reutilizar em uma futura
                 // funcionalidade
-                String[] informacoes = estacionamento[linhaParaOcupar][colunaParaOcupar].split("[=:]");
+                String[] informacoes = estacionamento[linhaParaOcupar][colunaParaOcupar].split(":");
                 String veiculo = "veiculo";
-                if (informacoes[1].equals("C")) {
+                if (informacoes[0].equals("C")) {
                     veiculo = "Carro";
-                } else if (informacoes[1].equals("V")) {
+                } else if (informacoes[0].equals("V")) {
                     veiculo = "Van";
-                } else if (informacoes[1].equals("M")) {
+                } else if (informacoes[0].equals("M")) {
                     veiculo = "Moto";
                 }
 
-                System.out.printf("A vaga %s está ocupada \r\n", informacoes[0]);
+                System.out.printf("A vaga %s está ocupada \r\n", vaga);
                 System.out.printf("Tipo do veículo: %s \r\n", veiculo);
-                System.out.printf("Vaga ocupada desde as %sh e %smin \r\n", informacoes[2], informacoes[3]);
+                System.out.printf("Vaga ocupada desde as %sh e %smin \r\n", informacoes[1], informacoes[2]);
 
             } else {
                 System.err.println("A vaga está liberada");
             }
             System.out.println("Digite 0 para sair da tela ou qualquer outro valor para continuar a consulta");
-            vaga = scanner.nextLine();
+            opcao = scanner.nextLine();
         }
 
     }
 
     public static void entrada(Scanner scanner) {
+        char tipo = ' ';
+        int horas = 0;
+        int minutos = 0;
+        Boolean validacao = false;
+        while (validacao == false) {
+            System.out.print("Informe o tipo de veículo (M/C/V): ");
+            tipo = scanner.nextLine().toUpperCase().charAt(0);
+            if (tipo == 'M' || tipo == 'C' || tipo == 'V') {
+                validacao = true;
+            } else {
+                System.out.println("Tipo de veículo inválido.");
+                validacao = false;
+            }
+        }
+
+        while (validacao == true) {
+            validacao = false;
+            System.out.println("Infome a hora de entrada no formato hh:mm");
+            String horario = scanner.nextLine();
+            try {
+                String[] horaMinuto = horario.split(":");
+                horas = Integer.parseInt(horaMinuto[0]);
+                minutos = Integer.parseInt(horaMinuto[1]);
+                if (horas > 23 || horas < 0 || minutos > 59 || minutos < 0) {
+                    System.out.println("Horário inválido");
+                    validacao = true;
+                }
+            } catch (Exception e) {
+                System.out.println("Formato inválido");
+                validacao = true;
+            }
+        }
+        int opcao = 0;
+        System.out.println("+---------------------------------------+");
+        System.out.println("| Selecione como deseja escolher a vaga |");
+        System.out.println("+---------------------------------------+");
+        System.out.println("| Opção 1 - Vaga Exata                  |");
+        System.out.println("| Opção 2 - Por Corredor                |");
+        System.out.println("| Opção 3 - Automático                  |");
+        System.out.println("+---------------------------------------+");
+        opcao = scanner.nextInt();
+        scanner.nextLine();
+        String informacoes = String.format("%c:%02d:%02d", tipo, horas, minutos);
+        String vagaLocal = "";
+        switch (opcao) {
+            case 1:
+                System.out.println("Informe a vaga desejada");
+                String vaga1 = scanner.nextLine();
+                int[] indices = converterVagaParaIndices(vaga1);
+                while (indices == null) {
+                    System.out.println("Vaga inválida");
+                    System.out.println("Informe uma vaga válida ");
+                    vaga1 = scanner.nextLine();
+                    indices = converterVagaParaIndices(vaga1);
+                }
+                int linhaParaOcupar = indices[0];
+                int colunaParaOcupar = indices[1];
+                if (estacionamento[linhaParaOcupar][colunaParaOcupar].equals(".")) {
+                    estacionamento[linhaParaOcupar][colunaParaOcupar] = informacoes;
+                    vagaLocal = ConverterIndicesParaVaga(linhaParaOcupar, colunaParaOcupar);
+                    System.out.printf("A entrada na vaga %s foi validada \r\n", vagaLocal);
+
+                } else {
+                    System.out.println("A vaga desejada já está ocupada");
+                }
+                break;
+
+            case 2:
+                System.out.println("Informe o corredor desejado");
+                char corredor = scanner.nextLine().toUpperCase().charAt(0);
+                int linha = corredor - 'A';
+                for (int j = 0; j < colunas; j++) {
+                    if (estacionamento[linha][j].equals(".")) {
+                        estacionamento[linha][j] = informacoes;
+                        vagaLocal = ConverterIndicesParaVaga(linha, j);
+                        validacao = true;
+                        System.out.printf("A entrada na vaga %s foi validada \r\n", vagaLocal);
+                        break;
+                    }
+                }
+                if (validacao == false) {
+                    System.out.println("Não há nenhuma vaga livre");
+                }
+                break;
+
+            case 3:
+                validacao = false;
+                procurarVaga: for (int i = 0; i < corredores; i++) {
+                    for (int j = 0; j < colunas; j++) {
+                        if (estacionamento[i][j].equals(".")) {
+                            estacionamento[i][j] = informacoes;
+                            vagaLocal = ConverterIndicesParaVaga(i, j);
+                            validacao = true;
+                            System.out.printf("A entrada na vaga %s foi validada \r\n", vagaLocal);
+                            break procurarVaga;
+
+                        }
+                    }
+                }
+                if (validacao == false) {
+                    System.out.println("Não há nenhuma vaga livre");
+                }
+                break;
+
+            default:
+                break;
+        }
 
     }
 
@@ -254,17 +359,24 @@ public class trabalho {
             int vagasTotais = 0;
             int vagasOcupadas = 0;
             int vagasLivres = 0;
-            String[][] ocupacao = estacionamento.clone();
+            String[][] mapaEstacionamento = new String[corredores][colunas];
             for (int i = 0; i < corredores; i++) {
                 for (int j = 0; j < colunas; j++) {
                     vagasTotais++;
-                    if (ocupacao[i][j] != ".") {
+                    String vagaAtual = estacionamento[i][j];
+                    if (vagaAtual.equals(".")) {
+                        mapaEstacionamento[i][j] = ".";
+                    } else {
                         vagasOcupadas++;
-                        String[] informacao = estacionamento[i][j].split("[=:]");
-                        ocupacao[i][j] = informacao[1];
-                        if (ocupacao[i][j].equals("C")) {
+
+                        String[] informacao = vagaAtual.split(":");
+                        String tipoVeiculo = informacao[0];
+
+                        mapaEstacionamento[i][j] = tipoVeiculo;
+
+                        if (tipoVeiculo.equals("C")) {
                             quantidadeCarros++;
-                        } else if (ocupacao[i][j].equals("M")) {
+                        } else if (tipoVeiculo.equals("M")) {
                             quantidadeMotos++;
                         } else {
                             quantidadeVans++;
@@ -275,14 +387,23 @@ public class trabalho {
 
             vagasLivres = vagasTotais - vagasOcupadas;
 
-            double porcetagemOcupacaoMotos = (double) (quantidadeMotos * 100) / vagasOcupadas;
-            int barrasGraficoMoto = (int) porcetagemOcupacaoMotos / 5;
+            double porcetagemOcupacaoMotos = 0;
+            int barrasGraficoMoto = 0;
+            double porcetagemOcupacaoCarros = 0;
+            int barrasGraficoCarros = 0;
+            double porcetagemOcupacaoVans = 0;
+            int barrasGraficoVans = 0;
 
-            double porcetagemOcupacaoCarros = (double) (quantidadeCarros * 100) / vagasOcupadas;
-            int barrasGraficoCarros = (int) porcetagemOcupacaoCarros / 5;
+            if (vagasOcupadas > 0) {
+                porcetagemOcupacaoMotos = (double) (quantidadeMotos * 100) / vagasOcupadas;
+                barrasGraficoMoto = (int) porcetagemOcupacaoMotos / 5;
 
-            double porcetagemOcupacaoVans = (double) (quantidadeVans * 100) / vagasOcupadas;
-            int barrasGraficoVans = (int) porcetagemOcupacaoVans / 5;
+                porcetagemOcupacaoCarros = (double) (quantidadeCarros * 100) / vagasOcupadas;
+                barrasGraficoCarros = (int) porcetagemOcupacaoCarros / 5;
+
+                porcetagemOcupacaoVans = (double) (quantidadeVans * 100) / vagasOcupadas;
+                barrasGraficoVans = (int) porcetagemOcupacaoVans / 5;
+            }
 
             double porcetagemOcupacao = (double) (vagasOcupadas * 100) / vagasTotais;
             int barrasGraficosOcupados = (int) porcetagemOcupacao / 5;
@@ -290,17 +411,18 @@ public class trabalho {
             double porcetagemLivre = (double) (vagasLivres * 100) / vagasTotais;
             int barrasGraficosLivres = (int) porcetagemLivre / 5;
 
-            // Impressão da matriz dos dados.
             System.out.printf(" \t");
             for (int n = 1; n <= colunas; n++) {
-                System.out.printf("%d\t", n);
+                System.out.printf("%02d\t", n);
             }
             System.out.println();
+
             for (int i = 0; i < corredores; i++) {
                 char letra = (char) (i + 'A');
                 System.out.printf("%c\t", letra);
                 for (int j = 0; j < colunas; j++) {
-                    System.out.printf("%s\t", ocupacao[i][j]);
+
+                    System.out.printf("%s\t", mapaEstacionamento[i][j]);
                 }
                 System.out.println("\r\n");
             }
@@ -314,10 +436,13 @@ public class trabalho {
 
             imprimirLinhaGrafico("Ocupadas", vagasOcupadas, porcetagemOcupacao, barrasGraficosOcupados, vagasTotais);
             imprimirLinhaGrafico("Livres", vagasLivres, porcetagemLivre, barrasGraficosLivres, vagasTotais);
-        }
-        opcao = scanner.nextInt();
-        System.out.print("\033\143");
 
+            System.out.println("Digite 0 para sair da tela de ocupação");
+            opcao = scanner.nextInt();
+            scanner.nextLine();
+        }
+
+        System.out.print("\033\143");
     }
 
     public static void imprimirLinhaGrafico(String veiculo, int quantidade, double porcentagem, int barras, int total) {
