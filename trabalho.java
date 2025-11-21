@@ -460,7 +460,59 @@ public class trabalho {
     }
 
     public static void financeiro(Scanner scanner) {
+System.out.println("\n---  Relatório Financeiro  ---");
 
+        if (transacoes.isEmpty()) {
+            System.out.println("Nenhum veículo saiu do estacionamento ainda.");
+            System.out.println("\nPressione Enter para voltar ao menu...");
+            scanner.nextLine();
+            return;
+        }
+
+        double totalMoto = 0, totalCarro = 0, totalVan = 0;
+        int countMoto = 0, countCarro = 0, countVan = 0;
+
+        // Processa a lista de transações
+        for (String t : transacoes) {
+            String[] partes = t.split(":");
+            
+            if (partes.length == 2) {
+                String tipo = partes[0];
+                double valor = Double.parseDouble(partes[1]);
+
+                switch (tipo) {
+                    case "M":
+                        countMoto++;
+                        totalMoto += valor;
+                        break;
+                    case "C":
+                        countCarro++;
+                        totalCarro += valor;
+                        break;
+                    case "V":
+                        countVan++;
+                        totalVan += valor;
+                        break;
+                }
+            }
+        }
+
+        double valorTotalGeral = totalMoto + totalCarro + totalVan;
+        int quantTotalGeral = countMoto + countCarro + countVan;
+
+        [cite_start]// Exibe a tabela 
+        System.out.println("+-----------------------------------------+");
+        System.out.printf("| %-10s | %-10s | %-12s |\n", "Veículo", "Quant.", "Valor (R$)");
+        System.out.println("+-----------------------------------------+");
+        System.out.printf("| %-10s | %-10d | R$ %-10.2f |\n", "Moto", countMoto, totalMoto);
+        System.out.printf("| %-10s | %-10d | R$ %-10.2f |\n", "Carro", countCarro, totalCarro);
+        System.out.printf("| %-10s | %-10d | R$ %-10.2f |\n", "Van", countVan, totalVan);
+        System.out.println("+-----------------------------------------+");
+        System.out.printf("| %-10s | %-10d | R$ %-10.2f |\n", "Total", quantTotalGeral, valorTotalGeral);
+        System.out.println("+-----------------------------------------+");
+
+        System.out.println("\nPressione Enter para continuar...");
+        scanner.nextLine();
     }
 
     public static void salvarDados(Scanner scanner) {
