@@ -1,7 +1,11 @@
-import java.util.Arrays;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
-public class trabalho {
+public class trabalhoteste {
     public static double carroReferencia = 0;
     public static double carroAdicional = 0;
 
@@ -20,6 +24,9 @@ public class trabalho {
     public static String statusVaga = ".";
     public static String[][] estacionamento;
 
+    public static String saidaVeiculo = "";
+    public static ArrayList<String> transacoes = new ArrayList<>();
+
     // teste
     public static String vaga = "";
 
@@ -28,15 +35,6 @@ public class trabalho {
         informacoes(scanner);
         gerenciarVagas();
         AbrirMenu(scanner);
-
-        // testes
-
-        // informacoes(scanner);
-        // System.out.println("digite a vaga");
-        // vaga = scanner.nextLine();
-        // System.out.println(Arrays.toString(converterVagaParaIndices(vaga)));
-        // ConverterIndicesParaVaga();
-
         scanner.close();
 
     }
@@ -82,21 +80,8 @@ public class trabalho {
             }
         }
 
-        estacionamento[0][1] = "C:08:15";
-        estacionamento[1][2] = "V:12:34";
-        estacionamento[2][4] = "M:15:03";
-        estacionamento[3][1] = "C:21:00";
-
-        // 4. Impressão da matriz com formatação.
-        // for (int i = 0; i < corredores; i++) {
-        // for (int j = 0; j < colunas; j++) {
-        // System.out.printf("%s\t", estacionamento[i][j]);
-        // }
-        // System.out.println();
-        // }
     }
 
-    // devolve um array para futuramente poder usar ele em outras funcionalidades
     public static int[] converterVagaParaIndices(String vaga) {
 
         if (vaga == null || vaga.length() < 2) {
@@ -112,14 +97,13 @@ public class trabalho {
             String numeroVaga = vaga.substring(1);
             int colunaLocal = Integer.parseInt(numeroVaga) - 1;
 
-            // verifica se esta dentro dos limites
             if (linhaLocal >= 0 && linhaLocal < corredores && colunaLocal >= 0 && colunaLocal < colunas) {
                 return new int[] { linhaLocal, colunaLocal };
             } else {
                 return null;
             }
         } catch (Exception e) {
-            return null; // caso insira um fomato invalido tipo "AX"
+            return null;
         }
 
     }
@@ -187,7 +171,60 @@ public class trabalho {
     }
 
     public static void carregarDados(Scanner scanner) {
+        System.out.println("Informe o nome do arquivo para carregar (ex: dados.txt):");
+        String nomeArquivo = scanner.nextLine();
+        File arquivo = new File(nomeArquivo);
 
+        if (!arquivo.exists()) {
+            System.out.println("Arquivo não encontrado.");
+            return;
+        }
+
+        try (Scanner leitorArquivo = new Scanner(arquivo)) {
+            for (int i = 0; i < corredores; i++) {
+                for (int j = 0; j < colunas; j++) {
+                    estacionamento[i][j] = ".";
+                }
+            }
+
+            int carregados = 0;
+            int ignorados = 0;
+
+            while (leitorArquivo.hasNextLine()) {
+                String linha = leitorArquivo.nextLine().trim();
+
+                if (linha.isEmpty())
+                    continue;
+
+                System.out.println("Lendo do arquivo: [" + linha + "]");
+
+                String[] partes = linha.split("=");
+
+                if (partes.length == 2) {
+                    String vaga = partes[0];
+                    String dados = partes[1];
+
+                    int[] indices = converterVagaParaIndices(vaga);
+
+                    if (indices != null) {
+                        estacionamento[indices[0]][indices[1]] = dados;
+                        carregados++;
+                    } else {
+                        System.out.println("ALERTA: A vaga " + vaga + " foi ignorada (fora dos limites atuais: "
+                                + corredores + "x" + colunas + ")");
+                        ignorados++;
+                    }
+                } else {
+                    System.out.println("ALERTA: Linha mal formatada ignorada: " + linha);
+                    ignorados++;
+                }
+            }
+            System.out.println("------------------------------------------------");
+            System.out.println("Resumo: " + carregados + " carregados com sucesso, " + ignorados + " ignorados/erros.");
+
+        } catch (Exception e) {
+            System.out.println("Erro ao ler o arquivo");
+        }
     }
 
     public static void consultarVaga(Scanner scanner, String vaga) {
@@ -210,8 +247,6 @@ public class trabalho {
             int linhaParaOcupar = indices[0];
             int colunaParaOcupar = indices[1];
             if (!estacionamento[linhaParaOcupar][colunaParaOcupar].equals(".")) {
-                // talvez transforme isso em uma função para reutilizar em uma futura
-                // funcionalidade
                 String[] informacoes = estacionamento[linhaParaOcupar][colunaParaOcupar].split(":");
                 String veiculo = "veiculo";
                 if (informacoes[0].equals("C")) {
@@ -228,6 +263,7 @@ public class trabalho {
 
             } else {
                 System.err.println("A vaga está liberada");
+
             }
             System.out.println("Digite 0 para sair da tela ou qualquer outro valor para continuar a consulta");
             opcao = scanner.nextLine();
@@ -347,7 +383,113 @@ public class trabalho {
     }
 
     public static void saida(Scanner scanner) {
+        int horasSaida = 0;
+        int minutosSaida = 0;
+        int horaEntradaEmMinutos = 0;
+        int horaSaidadaEmMinutos = 0;
+        int horaPermanencia = 0;
+        double minutosPermanencia = 0;
+        double tempoDePermanencia = 0;
+        Boolean validacao = true;
+        double valor = 0;
+        int tarifas = 0;
+        String tempo = null;
+        System.out.println("Informe a vaga desejada que irá ficar livre");
+        vaga = scanner.nextLine();
+        int[] indices = converterVagaParaIndices(vaga);
+        while (indices == null) {
+            System.out.println("Vaga inválida");
+            System.out.println("Informe uma vaga válida ");
+            vaga = scanner.nextLine();
+            indices = converterVagaParaIndices(vaga);
+        }
 
+        int linhaParaOcupar = indices[0];
+        int colunaParaOcupar = indices[1];
+        if (!estacionamento[linhaParaOcupar][colunaParaOcupar].equals(".")) {
+
+            String[] horarioEntrada = estacionamento[linhaParaOcupar][colunaParaOcupar].split(":");
+
+            while (validacao == true) {
+                validacao = false;
+                System.out.println("Infome a hora de saída no formato hh:mm");
+                String horario = scanner.nextLine();
+                try {
+                    String[] horaMinuto = horario.split(":");
+                    horasSaida = Integer.parseInt(horaMinuto[0]);
+                    minutosSaida = Integer.parseInt(horaMinuto[1]);
+                    if (horasSaida > 23 || horasSaida < 0 || minutosSaida > 59 || minutosSaida < 0) {
+                        System.out.println("Horário inválido");
+                        validacao = true;
+                    }
+                    horaEntradaEmMinutos = Integer.parseInt(horarioEntrada[1]) * 60
+                            + Integer.parseInt(horarioEntrada[2]);
+                    horaSaidadaEmMinutos = horasSaida * 60 + minutosSaida;
+                    if (horaEntradaEmMinutos >= horaSaidadaEmMinutos) {
+                        System.out.println("Horário inválido");
+                        System.out.println("Digite um horário de saída maior que o hoário de entrada");
+                        validacao = true;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Formato inválido");
+                    validacao = true;
+                }
+            }
+
+            tempoDePermanencia = (double) horaSaidadaEmMinutos - horaEntradaEmMinutos;
+            horaPermanencia = (int) tempoDePermanencia / 60;
+            minutosPermanencia = tempoDePermanencia - (horaPermanencia * 60);
+            tempo = String.format("%02d:%02.0f", horaPermanencia, minutosPermanencia);
+
+            if (tempoDePermanencia <= 30) {
+                tarifas = 0;
+            } else {
+                tarifas = (int) tempoDePermanencia / 30 - 1;
+                if (tempoDePermanencia % 30 > 0) {
+                    tarifas++;
+                }
+            }
+
+            switch (horarioEntrada[0]) {
+                case "C":
+                    valor = carroReferencia + carroAdicional * tarifas;
+                    break;
+
+                case "M":
+                    valor = motoReferencia + motoAdicional * tarifas;
+                    break;
+
+                case "V":
+                    valor = vanReferencia + vanAdicional * tarifas;
+                    break;
+
+                default:
+                    break;
+            }
+
+            System.out.printf("O veículo ficou estacionado por %s e o valor a ser pago é $%.2f\r\n", tempo, valor);
+            System.out.println("Deseja liberar a vaga [S/N]");
+            String escolha = scanner.nextLine();
+            while (!escolha.equals("S") && !escolha.equals("N")) {
+                System.out.println("Resposta inválida digite S ou N");
+                escolha = scanner.nextLine();
+            }
+
+            if (escolha.equals("S")) {
+                System.out.println("Vaga liberada");
+                estacionamento[linhaParaOcupar][colunaParaOcupar] = ".";
+                String info = String.format("%s:%.2f", horarioEntrada[0], valor);
+                transacoes.add(info);
+
+            }
+
+        } else {
+            System.err.println("A vaga já está livre");
+
+        }
+
+        System.out.println("\nPressione Enter para continuar...");
+        scanner.nextLine();
     }
 
     public static void ocupação(Scanner scanner) {
@@ -460,7 +602,7 @@ public class trabalho {
     }
 
     public static void financeiro(Scanner scanner) {
-System.out.println("\n---  Relatório Financeiro  ---");
+        System.out.println("\n---  Relatório Financeiro  ---");
 
         if (transacoes.isEmpty()) {
             System.out.println("Nenhum veículo saiu do estacionamento ainda.");
@@ -472,13 +614,12 @@ System.out.println("\n---  Relatório Financeiro  ---");
         double totalMoto = 0, totalCarro = 0, totalVan = 0;
         int countMoto = 0, countCarro = 0, countVan = 0;
 
-        // Processa a lista de transações
         for (String t : transacoes) {
             String[] partes = t.split(":");
-            
+
             if (partes.length == 2) {
                 String tipo = partes[0];
-                double valor = Double.parseDouble(partes[1]);
+                double valor = Double.parseDouble(partes[1].replace(",", "."));
 
                 switch (tipo) {
                     case "M":
@@ -500,7 +641,7 @@ System.out.println("\n---  Relatório Financeiro  ---");
         double valorTotalGeral = totalMoto + totalCarro + totalVan;
         int quantTotalGeral = countMoto + countCarro + countVan;
 
-        [cite_start]// Exibe a tabela 
+        // Exibe a tabela
         System.out.println("+-----------------------------------------+");
         System.out.printf("| %-10s | %-10s | %-12s |\n", "Veículo", "Quant.", "Valor (R$)");
         System.out.println("+-----------------------------------------+");
@@ -516,7 +657,7 @@ System.out.println("\n---  Relatório Financeiro  ---");
     }
 
     public static void salvarDados(Scanner scanner) {
-     System.out.print("Digite o nome do arquivo: ");
+        System.out.print("Digite o nome do arquivo: ");
         String nomeArquivo = scanner.nextLine();
 
         File arquivo = new File(nomeArquivo);
@@ -529,27 +670,24 @@ System.out.println("\n---  Relatório Financeiro  ---");
                 try {
                     arquivo.createNewFile();
                     System.out.print("Arquivo criado com sucesso!");
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                     return;
                 }
             }
 
             else {
-        System.out.println("Operação cancelada.");
-        return;
-           }
+                System.out.println("Operação cancelada.");
+                return;
+            }
         }
 
-        
-            try {
-            FileWriter writer = new FileWriter( arquivo, true); 
+        try {
+            FileWriter writer = new FileWriter(arquivo);
             BufferedWriter buffer = new BufferedWriter(writer);
-            
 
-            for (int i = 0; i <corredores; i++) {
-                for (int j = 0; j < colunas; j ++) {
+            for (int i = 0; i < corredores; i++) {
+                for (int j = 0; j < colunas; j++) {
                     if (!estacionamento[i][j].equals(".")) {
                         String vaga = ConverterIndicesParaVaga(i, j);
                         buffer.write(vaga + "=" + estacionamento[i][j]);
@@ -557,17 +695,13 @@ System.out.println("\n---  Relatório Financeiro  ---");
                     }
                 }
             }
-            
-            
-        
-        buffer.close(); // fecha o buffer (e salva tudo)
-        System.out.println("Dados salvos com sucesso em " + nomeArquivo);
 
-             } catch (IOException e) {
-        System.out.println("Erro ao salvar os dados: " + e.getMessage());
-    }
+            buffer.close();
+            System.out.println("Dados salvos com sucesso em " + nomeArquivo);
+
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar os dados: " + e.getMessage());
         }
-        
     }
 
     // === Integrantes ===
@@ -588,5 +722,4 @@ System.out.println("\n---  Relatório Financeiro  ---");
 
         }
     }
-
 }
